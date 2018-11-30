@@ -167,13 +167,13 @@ public class Client {
 	      System.out.println("Socket exception: "+se);
 	      System.exit(0);
 	    }
-	}
+	
 	  //init RTSP sequence number
 	  RTSPSeqNb = 1;
 	 
 	  //Send SETUP message to the server
 	  
-	  RTSPBufferedWriter.write(S);
+	  send_RTSP_request("SETUP");
 
 	  //Wait for the response 
 	  if (parse_server_response() != 200)
@@ -181,11 +181,12 @@ public class Client {
 	  else 
 	    {
 	      //change RTSP state and print new state of READY 
-	      
+	      state = READY;
 
 	      //System.out.println("New RTSP state: READY.");
 	    }
-	}//else if state != INIT then do nothing
+	}
+	}	//else if state != INIT then do nothing
     }
 
 
@@ -206,19 +207,23 @@ public class Client {
 	  ++RTSPSeqNb;
 
 	  //Send PLAY message to the server
-	  
+	  send_RTSP_request("PLAY");
 
 	  //Wait for the response 
+	  if (parse_server_response() != 200) {
+		  
 	  
 		  System.out.println("Invalid Server Response");
-	  else 
+	  
+	  }
+		  else 
 	    {
 	      //change RTSP state and print out new state
-	  
+		  state = PLAYING;
 	      System.out.println("New RTSP state: PLAYING");
 
 	      //start the timer
-	   
+	      timer.start();
 	    }
 	}
 	}//else if state != READY then do nothing
@@ -235,24 +240,26 @@ public class Client {
       //System.out.println("Pause Button pressed !");   
 
       // test state to see if it is PLAYING (so that it can then be PAUSED)
-
+		if (state == PLAYING)
 	{
 	  //increase RTSP sequence number
 	  ++RTSPSeqNb;
 
 	  //Send PAUSE message to the server
-
+	  send_RTSP_request("PAUSE");
 	  //Wait for the response 
-	
+	  if(parse_server_response() != 200) {
+		  
 		  System.out.println("Invalid Server Response");
+	}
 	  else 
 	    {
 	      //change RTSP state and print out to READY state
-	     
+	     state = READY;
 	      //System.out.println("New RTSP state: ...");
-	      
+	      System.out.println("new RTSP State: Paused");
 	      //stop the timer
-	      ______________________________
+	      timer.stop();
 	    }
 	}
       //else if state != PLAYING then do nothing
@@ -272,21 +279,21 @@ public class Client {
       
 
       //Send TEARDOWN message to the server
-      
+      send_RTSP_request("TEARDOWN");
 
       //Wait for the response 
-      if (parse_server_response()_____)
+      if (parse_server_response()!= 200)
 	System.out.println("Invalid Server Response");
       else 
 	{     
 	  //change RTSP state to INIT and print out new state
-
+    	  state = INIT;
 	  
 
 
 
 	  //stop the timer
-
+    	  timer.stop();
 	  
 	  //exit
 	  System.exit(0);
@@ -355,7 +362,7 @@ public class Client {
 			reply_code = Integer.parseInt(tokens.nextToken());
 
 			// if reply code is OK get and print the 2 other lines
-			if (reply_code == _______) {
+			if (reply_code == 200) {
 				String SeqNumLine = RTSPBufferedReader.readLine();
 				System.out.println(SeqNumLine);
 
@@ -372,7 +379,7 @@ public class Client {
 			System.exit(0);
 		}
 
-		return (______);
+		return (200);
 	}
 
 	// ------------------------------------
@@ -387,10 +394,10 @@ public class Client {
       //Use the RTSPBufferedWriter to write to the RTSP socket
 
       //write the request line for the video file name:
-      RTSPBufferedWriter.write((request_type+" ______________ RTSP/1.0” +CRLF);           ...);
+      RTSPBufferedWriter.write(request_type +" " + VideoFileName + "RTSP/1.0" + CRLF);
 
       //write the CSeq line: 
-      RTSPBufferedWriter.write("CSeq: "_________________);
+      RTSPBufferedWriter.write("CSeq: " + RTSPSeqNb + CRLF);
 
 //check if request_type is equal to "SETUP" and in this case write the Transport: line advertising to the server the port used to receive the RTP packets RTP_RCV_PORT
       if ((new String(request_type)).compareTo("SETUP") == 0)
